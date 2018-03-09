@@ -1,0 +1,292 @@
+
+{% extends 'base.html' %}
+
+
+{% block title %}ʻAumakua{% endblock %}
+
+{% block content %}
+
+<div class="nav nav-fluid" style="background-color: lightgray;">
+    <div id="accordion" role="tablist" aria-multiselectable="true">
+        <div class="card">
+            <div class="card-header" role="tab" id="headingTwo">
+                <h3 class="mb-0">
+                    <a class="collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        <i class="fa fa-expand" aria-hidden="true"></i>
+                        Filter Condition
+                    </a>
+                </h3>
+            </div>
+            <div id="collapseTwo" class="collapse" role="tabpanel" aria-labelledby="headingTwo">
+                <div class="card-block">
+                    {% block filter_body %}{% endblock %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="projects_dialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle"
+         aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Select feature you want to check</h5>
+                <button type="button" id="project_setting1" class="btn btn-primary" data-toggle="modal"
+                        data-target="#exampleModalLong">
+                    OK
+                </button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="treeview_container" class="hummingbird-treeview">
+                    {% block projects_dialog %}{% endblock %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="project_setting" class="btn btn-primary" data-toggle="modal"
+                        data-target="#exampleModalLong">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% block graph_body %}{% endblock %}
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+  $("#treeview").hummingbird();
+
+</script>
+
+<script type="text/javascript">
+
+
+{% for column_graph in column_graphs %}
+
+Highcharts.chart('{{column_graph.divid}}', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: '{{column_graph.title}}'
+    },
+    subtitle: {
+        text: '{{column_graph.subtitle}}'
+    },
+    xAxis: {
+        type: 'category'
+    },
+    yAxis: {
+        title: {
+            text: '{{column_graph.ytitle}}'
+        }
+
+    },
+    legend: {
+        enabled: false
+    },
+    plotOptions: {
+        series: {
+            borderWidth: 0,
+            dataLabels: {
+                enabled: true,
+                format: '{point.y:.1f}'
+            }
+        }
+    },
+
+    tooltip: {
+        headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+        pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y}</b> of total<br/>'
+    },
+
+     series: [{
+        name: 'Name',
+        colorByPoint: true,
+        data: [
+        {% for type_type,count in column_graph.data %}
+        {
+            name: '{{type_type}}',
+            y: {{count}},
+            drilldown: null,
+            events:{
+              click: function (event) {
+                  {% if column_graph.type == "project" %}
+                       location.href="{% url column_graph.href %}?project={{type_type}}&rule={{target_rule}}&severity={{target_severity}}&version={{target_version}}"
+                  {% endif %}
+                  {% if column_graph.type == "rule" %}
+                       location.href="{% url column_graph.href %}?project={{target_project}}&rule={{type_type}}&severity={{target_severity}}&version={{target_version}}"
+                  {% endif %}
+              }
+          }
+        },{% endfor %}
+        ]
+     }]
+
+});
+
+{% endfor %}
+
+{% for line_graph in line_graphs %}
+Highcharts.chart('{{line_graph.divid}}', {
+    chart: {
+        type: 'line'
+    },
+    title: {
+        text: '{{line_graph.title}}'
+    },
+    subtitle: {
+        text: '{{line_graph.subtitle}}'
+    },
+    xAxis: {
+        categories: [
+        {% for date in line_graph.date %}
+        '{{date}}',
+        {% endfor %}
+        ]
+    },
+    yAxis: {
+        title: {
+            text: '{{line_graph.ytitle}}'
+        }
+    },
+    plotOptions: {
+        line: {
+            dataLabels: {
+                enabled: true
+            },
+            enableMouseTracking: false
+        }
+    },
+
+    series: [
+    {% for name,line in line_graph.data.items %}
+        {
+            name: '{{name}}',
+            data: [
+            {% for date,bug_count in line %}
+                {{bug_count}},
+            {% endfor %}
+            ]
+        },
+    {% endfor %}
+    ]
+});
+{% endfor %}
+
+
+var seriesOptions = [],
+    seriesCounter = 0,
+    names = ['MSFT', 'AAPL', 'GOOG'];
+
+
+function createChart() {
+
+    Highcharts.stockChart('container', {
+
+        rangeSelector: {
+            allButtonsEnabled: true,
+            buttons: [{
+                type: 'month',
+                count: 3,
+                text: 'Day',
+                dataGrouping: {
+                    forced: true,
+                    units: [['day', [1]]]
+                }
+            }, {
+                type: 'year',
+                count: 1,
+                text: 'Week',
+                dataGrouping: {
+                    forced: true,
+                    units: [['week', [1]]]
+                }
+            }, {
+                type: 'all',
+                text: 'Month',
+                dataGrouping: {
+                    forced: true,
+                    units: [['month', [1]]]
+                }
+            }],
+            buttonTheme: {
+                width: 60
+            },
+            selected: 1
+        },
+
+        yAxis: {
+            labels: {
+                formatter: function () {
+                    return (this.value > 0 ? ' + ' : '') + this.value ;
+                }
+            },
+            plotLines: [{
+                value: 0,
+                width: 2,
+                color: 'silver'
+            }]
+        },
+
+         title: {  // チャートタイトル
+            text : 'Metrix'
+         },
+
+      legend: {  // 凡例
+               enabled: true,
+               align: '',
+               verticalAlign: 'top',
+               floating: true,
+               x: 0
+        },
+
+        tooltip: {
+            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>',
+            valueDecimals: 0,
+            split: true
+        },
+
+
+        series: [
+        {% for name,line in highstock.data.items %}
+            {
+                name: '{{name}}',
+                data: [
+                {% for date,count in line.items %}
+                    [{{date}},{{count}}],
+                {% endfor %}
+                ]
+            },
+        {% endfor %}
+        ]});
+
+
+}
+
+$.each(names, function (i, name) {
+
+    $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=' + name.toLowerCase() + '-c.json&callback=?',    function (data) {
+
+        seriesCounter += 1;
+
+        if (seriesCounter === names.length) {
+            createChart();
+        }
+    });
+});
+
+ </script>
+
+{% block scripts1 %}{% endblock %}
+{% endblock %}

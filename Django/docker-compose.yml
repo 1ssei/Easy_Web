@@ -1,0 +1,24 @@
+version: '3'  
+services:  
+  nginx:
+    restart: always
+    image: nginx:latest
+    container_name: NGINX
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+      - ./docker_config/nginx:/etc/nginx/conf.d
+      - /static:/static
+    depends_on:
+      - web
+  web:
+    restart: always
+    build: .
+    container_name: DJANGO
+    command: bash -c "ls -al && python manage.py makemigrations && python manage.py collectstatic --clear --noinput && python manage.py migrate && ls -al && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/code
+      - /static:/static
+    expose:
+      - "8000"

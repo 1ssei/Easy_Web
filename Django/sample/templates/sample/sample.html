@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Title{% endblock %}
+
+{% block content %}
+<table id="person_table" class="display" cellspacing="0">
+    <thead>
+    <tr>
+        <th>Person Name</th>
+        <th>Person Birthday</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for person in person_list %}
+    <tr>
+        <td>{{person.name}}</td>
+        <td>{{person.birthday}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+  $(document).ready(function() {
+    var person_table = $('#person_table').DataTable();
+  } );
+
+</script>
+{% endblock %}

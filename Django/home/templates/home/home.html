@@ -1,0 +1,12 @@
+
+{% extends 'base_graph.html' %}
+{% block content_header %}
+    <a href="{% url 'sample:person_list' %}" class="btn btn-info" role="button"><i class="fa fa-external-link" aria-hidden="true"></i>
+    Go to Personal List</a>
+{% endblock %}
+
+
+{% block graph_body %}
+<div id="container" style="width: 100%; height: 400px"></div>
+{% endblock %}
+
